@@ -1,2 +1,3 @@
+
 class CompanyNotFoundException(Exception):
     pass

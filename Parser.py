@@ -1,43 +1,49 @@
-from Exceptions import CompanyNotFoundException
+from Exceptions.CompanyNotFoundException import CompanyNotFoundException
+from Company import Company
 import logging
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
-logging.basicConfig(level=logging.ERROR, filename="log.log", format="%(asctime)s %(levelname)s %(message)s")
+
+logging.basicConfig(level=logging.DEBUG, filename="log.log", format="%(asctime)s %(levelname)s %(message)s")
 
 
 def get_main_requsites(url):
     page = requests.get(url, headers={'User-Agent': UserAgent().chrome})
     html = page.content
     soup = BeautifulSoup(html, 'lxml')
-    result = {"company_url": None,
-              "company_name": None,
-              "company_adress": None,
-              "company_inn": None}
+    limit = 3
+
+    result = []
 
     if soup.find("div", class_="main-content search-result emptyresult"):
-        raise CompanyNotFoundException
-    all_company = soup.findAll('div', class_="company-item")  # <div class="company-item__title"> 150 строка
+        raise CompanyNotFoundException("Компании с таким названием не найдены")
+    all_company = soup.findAll('div', class_="company-item", limit=limit)  # <div class="company-item"> 208 строка
     for company in all_company:
 
-        if company.find('div', class_="company-item__title"):
-            for company_name in company:  # Try to find the NAME and ID
+        c_text = company.find_next("div", class_="company-item__title").text  # NAME
+        logging.warning("NAME not found") if c_text.strip() is None else logging.info("We've got NAME")
 
-                if company_name.find('span', class_="finded-text"):  # NAME
-                    c_text = company_name.text
-                    if r"'\n" in c_text:
-                        c_text.replace(r"'\n", "")
-                    if r"\n'" in c_text:
-                        c_text.replace(r"\n'", "")
-                    result["company_name"] = c_text
-                    logging.info("We've got the NAME")
-                else:
-                    logging.warning("The NAME is not found")
+        u = company.find_next("a", href=True).get("href")  # URL
+        logging.warning("URL not found") if u is None else logging.info("We've got URL")
 
-                if company_name.find("a", href=True):
-                    result["company_url"] = company["href"]
-                    logging.info("We've got the URL")
-                else:
-                    logging.warning("The URL is not found")
-    print(result)
+        a = company.find_next("address", class_="company-item__text").text  # ADDRESS
+        logging.warning("ADR not found") if a.strip() is None else logging.info("We've got ADR")
+
+        inn = company.find_all_next("div", class_="company-item-info", limit=2)  # INN
+        for element in inn[1].text.split("\n"):  # Ищем тег класса "company-item-info" во втором элементе массива, так как первый - учредитель либо гендир
+            if len(element) == 10:
+                try:
+                    el = int(element)
+                    break
+                except ValueError:
+                    continue
+        if el is None:
+            logging.info("INN not found")
+        else:
+            logging.info("We've got INN")
+
+        result.append(Company([u, c_text.strip(), a.strip(), el]))
+
+    return result
