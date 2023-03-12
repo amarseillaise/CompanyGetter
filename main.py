@@ -1,8 +1,8 @@
-from Manager import start
+from Manager import get_window
 
 
 def main():
-    start()
+    get_window()
 
 
 if __name__ == "__main__":
