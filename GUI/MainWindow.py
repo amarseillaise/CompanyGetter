@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
+from Exceptions import SearchExceptions
 
 
 class MainWindow:
@@ -58,18 +59,29 @@ class MainWindow:
     def get_company(self):
         for i in self.table.get_children():  # first clean the table if it almost has info
             self.table.delete(i)
-
-        self.company_list_in_window = self.search(self.text.get())
         try:
-            for company in self.company_list_in_window:
+            self.company_list_in_window = self.search(self.text.get())
+        except ConnectionError:
+            messagebox.showerror("Ошибка!", "Ну удалось подключиться. Проверьте соединение с интернетом")
+            return
+        except SearchExceptions.CompanyNotFoundException:
+            messagebox.showwarning("Внимание!", "Компаний с таким название не найдено")
+            return
+        except SearchExceptions.CaptchaEcxcepion:
+            messagebox.showwarning("Внимание!", "Не удалось обработать запрос. Попробуйте через пару минут")
+            return
+
+        for company in self.company_list_in_window:
                 self.table.insert(parent='', index='end', text='',
                                   values=(company.name, company.inn, company.adress))
-        except TypeError:
-            messagebox.showwarning("Внимание!", "Компаний с таким название не найдено")
 
     def download_company(self):
         focused = self.table.focus()
-        inn_of_selected_company = self.table.item(focused, 'values')[1]
+        try:
+            inn_of_selected_company = self.table.item(focused, 'values')[1]
+        except IndexError:
+            messagebox.showwarning("Внимание!", "Сначала выберите компанию из списка")
+            return
         for c in self.company_list_in_window:
             try:
                 if c.inn == int(inn_of_selected_company):

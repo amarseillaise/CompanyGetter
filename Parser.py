@@ -1,14 +1,25 @@
+import Exceptions.SearchExceptions
 from Company import Company
 import logging
 import requests
 from bs4 import BeautifulSoup
+#  import webbrowser
 from fake_useragent import UserAgent
 
 logging.basicConfig(level=logging.DEBUG, filename="log.log", format="%(asctime)s %(levelname)s %(message)s")
 DOMAIN = "https://www.rusprofile.ru/"
 
 
+def check_connection():
+    try:
+        requests.head(DOMAIN, timeout=2)
+    except requests.ConnectionError as e:
+        logging.error(e)
+        raise ConnectionError
+
+
 def get_main_requsites(query):
+    check_connection()
     search_request = "search?query=%s&type=ul&search_inactive=2" % query
     url = DOMAIN + search_request
     page = requests.get(url, headers={'User-Agent': UserAgent().chrome})
@@ -19,7 +30,10 @@ def get_main_requsites(query):
     result = []
 
     if soup.find("div", class_="main-content search-result emptyresult"):
-        return -1
+        raise Exceptions.SearchExceptions.CompanyNotFoundException
+    if soup.find("div", class_="captcha-section"):
+        logging.warning("Got captcha")
+        raise Exceptions.SearchExceptions.CaptchaEcxcepion
     all_company = soup.findAll('div', class_="company-item", limit=limit)  # <div class="company-item"> 208 строка
     for company in all_company:
 
@@ -43,10 +57,16 @@ def get_main_requsites(query):
 
 
 def get_full_requsites(company):
+    check_connection()
     url = DOMAIN + company.url
     page = requests.get(url, headers={'User-Agent': UserAgent().chrome})
     html = page.content
     soup = BeautifulSoup(html, 'lxml')
+
+    if soup.find("div", class_="captcha-section"):
+        logging.warning("Got captcha")
+        #  webbrowser.open('https://vk.com', new=2)
+        raise Exceptions.SearchExceptions.CaptchaEcxcepion
 
     company_info = soup.find('div', class_="tiles")
 
@@ -56,8 +76,8 @@ def get_full_requsites(company):
     okved = company_info.find_next("span", class_="bolder").text[1:-1]  # OKVED
 
     company.full_name = full_name
-    company.ogrn = ogrn
-    company.kpp = kpp
-    company.okved = okved
+    company.ogrn = str(ogrn)
+    company.kpp = str(kpp)
+    company.okved = str(okved)
 
     return company

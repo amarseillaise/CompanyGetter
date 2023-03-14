@@ -1,20 +1,35 @@
 import os
+import xml.etree.ElementTree as xml
 
-def make_csv(company):
+def make_xml(company):
     path = os.getcwd() + "\\Results\\"
     if not os.path.isdir(path):
         os.mkdir(path)
-    file = company.name.replace('"', "'") + ".csv"
+    file = company.name.replace('"', "'") + ".xml"
     name = path + file
 
-    with open(name, 'w') as f:
-        f.write("Название;Полное название;Адрес;ИНН;ОГРН;КПП;ОКВЭД\n%s;%s;%s;%s;%s;%s;%s" % (
-            company.name,
-            company.full_name,
-            company.adress,
-            company.inn,
-            company.ogrn,
-            company.kpp,
-            company.okved
-        ))
-        f.close()
+    org = xml.Element("organisation")
+
+    n = xml.SubElement(org, "name")
+    n.text = company.name
+
+    fn = xml.SubElement(org, "full_name")
+    fn.text = company.full_name
+
+    a = xml.SubElement(org, "address")
+    a.text = company.adress
+
+    i = xml.SubElement(org, "inn")
+    i.text = str(company.inn)
+
+    og = xml.SubElement(org, "ogrn")
+    og.text = company.ogrn
+
+    k = xml.SubElement(org, "kpp")
+    k.text = company.kpp
+
+    ok = xml.SubElement(org, "okved")
+    ok.text = company.okved
+
+    tree = xml.ElementTree(org)
+    tree.write(name)
