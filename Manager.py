@@ -20,8 +20,8 @@ def parse(company):
         company = get_full_requsites(company)
     except (ConnectionError, SearchExceptions.CompanyNotFoundException, SearchExceptions.CaptchaEcxcepion) as e:
         raise e
-    except Exception("Error during get full list of requisite"):
-        raise Exception
+    except TypeError:
+        raise TypeError
     WriterToFile.make_xml(company)
 
 

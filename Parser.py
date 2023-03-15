@@ -8,6 +8,7 @@ from fake_useragent import UserAgent
 
 logging.basicConfig(level=logging.DEBUG, filename="log.log", format="%(asctime)s %(levelname)s %(message)s")
 DOMAIN = "https://www.rusprofile.ru/"
+UA = UserAgent(use_external_data=True).chrome
 
 
 def check_connection():
@@ -22,7 +23,13 @@ def get_main_requsites(query):
     check_connection()
     search_request = "search?query=%s&type=ul&search_inactive=2" % query
     url = DOMAIN + search_request
-    page = requests.get(url, headers={'User-Agent': UserAgent().chrome})
+    page = requests.get(url, headers={'User-Agent': UA})
+    try:
+        if page.history[0].status_code == 302:  # 302 means redirecting to organisation page if search result is one
+            # item. So we call method which returning Company class with full requisites
+            return [get_full_requsites(Company([page.url, None, None, None]), conc_domain=False)]
+    except IndexError:
+        pass
     html = page.content
     soup = BeautifulSoup(html, 'lxml')
     limit = 10
@@ -56,10 +63,10 @@ def get_main_requsites(query):
     return result
 
 
-def get_full_requsites(company):
+def get_full_requsites(company, conc_domain=True):
     check_connection()
-    url = DOMAIN + company.url
-    page = requests.get(url, headers={'User-Agent': UserAgent().chrome})
+    url = DOMAIN + company.url if conc_domain else company.url
+    page = requests.get(url, headers={'User-Agent': UA})
     html = page.content
     soup = BeautifulSoup(html, 'lxml')
 
@@ -68,13 +75,23 @@ def get_full_requsites(company):
         #  webbrowser.open('https://vk.com', new=2)
         raise Exceptions.SearchExceptions.CaptchaEcxcepion
 
-    company_info = soup.find('div', class_="tiles")
+    company_info = soup.find('div', class_="container")
 
+    name = company_info.find_next("div", class_="company-header__row").get_text()  # NAME
+    address = company_info.find_next("span", {"id": "clip_address"}).text  # ADDRESS
+    inn = company_info.find_next("span", {"id": "clip_inn"}).text  # INN
     full_name = company_info.find_next("div", class_="company-name").text  # FULL NAME
     ogrn = company_info.find_next("span", {"id": "clip_ogrn"}).text  # OGRN
     kpp = company_info.find_next("span", {"id": "clip_kpp"}).text  # KPP
-    okved = company_info.find_next("span", class_="bolder").text[1:-1]  # OKVED
+    try:
+        okved = company_info.find_next("span", class_="bolder").text[1:-1]  # OKVED
+    except (TypeError, AttributeError):
+        logging.warning("Failed to parse OKVED. What f org is it?")
+        raise TypeError("Failed to parse OKVED. What f org is it?")
 
+    company.name = name.strip()
+    company.adress = " ".join(address.split())
+    company.inn = inn
     company.full_name = full_name
     company.ogrn = str(ogrn)
     company.kpp = str(kpp)

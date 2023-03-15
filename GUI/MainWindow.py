@@ -29,15 +29,15 @@ class MainWindow:
         self.frame["bg"] = PURPLE
         self.frame.grid(row=0, column=0, sticky='news')
 
-        self.lbl = Label(self.frame, text="Введите название или адрес:")
+        self.lbl = Label(self.frame, text="Введите название, адрес, ОГРН или ИНН:")
         self.lbl["bg"] = PURPLE
         self.lbl.grid(row=0, column=0, padx=(21, 1), pady=15, sticky='w')
 
-        self.text = Entry(self.frame, width=60)
-        self.text.grid(row=0, column=0, padx=(190, 1), pady=15, sticky='w', columnspan=2)
+        self.text = Entry(self.frame, width=50)
+        self.text.grid(row=0, column=0, padx=(280, 1), pady=15, sticky='w', columnspan=2)
 
         self.button_search = Button(self.frame, text="Поиск", width=8, command=lambda: self.get_company())
-        self.button_search.grid(row=0, column=1, padx=(150, 1), pady=15)
+        self.button_search.grid(row=0, column=1, padx=(230, 1), pady=15)
 
         self.table = ttk.Treeview(self.frame, columns=columns, show="headings")
         self.table.grid(row=1, column=0, columnspan=3, padx=(25, 1), pady=1)
@@ -85,7 +85,11 @@ class MainWindow:
         for c in self.company_list_in_window:
             try:
                 if c.inn == int(inn_of_selected_company):
-                    self.download(c)
+                    try:
+                        self.download(c)
+                    except TypeError:
+                        messagebox.showerror("Ошибка!", "Какая-то неправильная организация!")
+                        return
                     messagebox.showinfo("Успешно!", "Загрузка успешно завершена. Ты - молодец")
             except ValueError:
                 raise ValueError("Похоже изменился порядок данных в столбцах в MainWinow")
