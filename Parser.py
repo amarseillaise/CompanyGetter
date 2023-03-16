@@ -27,7 +27,7 @@ def get_main_requsites(query):
     try:
         if page.history[0].status_code == 302:  # 302 means redirecting to organisation page if search result is one
             # item. So we call method which returning Company class with full requisites
-            return [get_full_requsites(Company([page.url, None, None, None]), conc_domain=False)]
+            return [get_full_requsites(Company([page.url, None, None, None]))]
     except IndexError:
         pass
     html = page.content
@@ -63,9 +63,9 @@ def get_main_requsites(query):
     return result
 
 
-def get_full_requsites(company, conc_domain=True):
+def get_full_requsites(company):
     check_connection()
-    url = DOMAIN + company.url if conc_domain else company.url
+    url = company.url if str(company.url).startswith(DOMAIN) else DOMAIN + company.url
     page = requests.get(url, headers={'User-Agent': UA})
     html = page.content
     soup = BeautifulSoup(html, 'lxml')

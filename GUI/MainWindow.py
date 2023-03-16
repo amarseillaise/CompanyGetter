@@ -72,8 +72,8 @@ class MainWindow:
             return
 
         for company in self.company_list_in_window:
-                self.table.insert(parent='', index='end', text='',
-                                  values=(company.name, company.inn, company.adress))
+            self.table.insert(parent='', index='end', text='',
+                              values=(company.name, company.inn, company.adress))
 
     def download_company(self):
         focused = self.table.focus()
@@ -84,7 +84,7 @@ class MainWindow:
             return
         for c in self.company_list_in_window:
             try:
-                if c.inn == int(inn_of_selected_company):
+                if int(c.inn) == int(inn_of_selected_company):
                     try:
                         self.download(c)
                     except TypeError:

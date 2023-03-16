@@ -1,11 +1,10 @@
 import os
 import xml.etree.ElementTree as xml
 
-def make_xml(company):
 
-    #path = os.path.abspath(os.path.join(os.getcwd(), os.pardir)) + "\\Results\\"
+def make_xml(company):
+    # path = os.path.abspath(os.path.join(os.getcwd(), os.pardir)) + "\\Results\\"
     path = os.getcwd() + "\\Results\\"
-    print(path)
 
     if not os.path.isdir(path):
         os.mkdir(path)
