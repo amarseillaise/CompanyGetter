@@ -10,3 +10,8 @@ Requirements:
 Ссылки:
 - [GitHub](https://github.com)
 - [Markdown Cheat Sheet with Examples](https://www.markdownguide.org/extended-syntax/ "Маркдаун - шпаргалка")
+
+Ненумерованный список: 
+- Первый элемент
+- Второй элемент
+   Подэлемент
