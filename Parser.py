@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 #  import webbrowser
 from fake_useragent import UserAgent
+from tkinter import messagebox
 
 logging.basicConfig(level=logging.DEBUG, filename="log.log", format="%(asctime)s %(levelname)s %(message)s")
 DOMAIN = "https://www.rusprofile.ru/"
@@ -24,12 +25,18 @@ def get_main_requsites(query):
     search_request = "search?query=%s&type=ul&search_inactive=2" % query
     url = DOMAIN + search_request
     page = requests.get(url, headers={'User-Agent': UA})
+    if page.status_code == 403:
+        messagebox.showerror("Ошибка!", "403 ответ от сайта.\n\nОбратитесь к Марселю.")
+        exit()
     try:
-        if page.history[0].status_code == 302:  # 302 means redirecting to organisation page if search result is one
+        if page.history[0].status_code == 302:  # 302 means redirecting to organisation's page if search result is one
             # item. So we call method which returning Company class with full requisites
             return [get_full_requsites(Company([page.url, None, None, None]))]
     except IndexError:
         pass
+    except AttributeError as e:
+        messagebox.showerror(f"Ошибка!", f"Произошло изменение на rusprofile.ru\n\nОбратитесь к Марселю.\n\n{e}")
+        exit()
     html = page.content
     soup = BeautifulSoup(html, 'lxml')
     limit = 10
@@ -80,7 +87,7 @@ def get_full_requsites(company):
     name = company_info.find_next("div", class_="company-header__row").get_text()  # NAME
     address = company_info.find_next("span", {"id": "clip_address"}).text  # ADDRESS
     inn = company_info.find_next("span", {"id": "clip_inn"}).text  # INN
-    full_name = company_info.find_next("div", class_="company-name").text  # FULL NAME
+    full_name = company_info.find_next("h2", class_="company-name").text  # FULL NAME
     ogrn = company_info.find_next("span", {"id": "clip_ogrn"}).text  # OGRN
     kpp = company_info.find_next("span", {"id": "clip_kpp"}).text  # KPP
     try:
