@@ -56,16 +56,19 @@ def get_main_requsites(query):
         a = company.find_next("address", class_="company-item__text").text  # ADDRESS
 
         inn = company.find_all_next("div", class_="company-item-info", limit=2)  # INN
-        for element in inn[1].text.split(
-                "\n"):  # Ищем тег класса "company-item-info" во втором элементе массива, так как первый - учредитель либо гендир
+        for element in inn[1].text.strip().split(
+                " "):  # Ищем тег класса "company-item-info" во втором элементе массива, так как первый - учредитель либо гендир
             if len(element) == 10:
                 try:
                     el = int(element)
                     break
                 except ValueError:
                     continue
-
-        result.append(Company([u, c_text.strip(), a.strip(), el]))
+        try:
+            result.append(Company([u, c_text.strip(), a.strip(), el]))
+        except UnboundLocalError as e:
+            messagebox.showerror(f"Ошибка!", f"Произошло изменение на rusprofile.ru\n\nОбратитесь к Марселю.\n\n{e}")
+            exit()
 
     return result
 
